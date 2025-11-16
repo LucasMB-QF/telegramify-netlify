@@ -1,20 +1,22 @@
-from fastapi import FastAPI
-from pydantic import BaseModel
+from fastapi import FastAPI, Body
 import telegramify_markdown
 
 app = FastAPI()
 
-class Item(BaseModel):
-    text: str
-
+# 1) Markdown normal → Telegram MarkdownV2
 @app.post("/markdownify")
-def convert_markdown(item: Item):
-    try:
-        converted = telegramify_markdown.markdownify(
-            item.text,
-            max_line_length=None,
-            normalize_whitespace=False
-        )
-        return {"result": converted}
-    except Exception as e:
-        return {"error": str(e)}
+def convert_markdown(text: str = Body(..., embed=True)):
+    converted = telegramify_markdown.markdownify(text)
+    return {"result": converted}
+
+# 2) Telegramify → divide texto largo + renderiza
+@app.post("/telegramify")
+def convert_telegramify(text: str = Body(..., embed=True)):
+    converted = telegramify_markdown.telegramify(text)
+    return {"result": converted}
+
+# 3) Standardize → corrige MarkdownV2 mal escrito
+@app.post("/standardize")
+def convert_standardize(text: str = Body(..., embed=True)):
+    converted = telegramify_markdown.standardize(text)
+    return {"result": converted}
